@@ -2,32 +2,51 @@ const express = require('express')
 const app = express()
 const path = require('path');
 const nunjucks = require('nunjucks');
-const ioport = 3000;
+const ioport = 1569;
 const port = 5000;
+const tickrate = 10;
 const io = require('socket.io')(ioport);
+const tankslogic = require('./static/scripts/tankslogic');
 
 nunjucks.configure( '.', {
     autoescape: true,
     express: app
 } ) ;
+gamearea = {};
+gamearea['canvas']={};
+gamearea.canvas.width = 1000;
+gamearea.canvas.height = 1000;
 
 app.set('view engine', 'nunjucks')
 app.use('/static', express.static('static'))
-
-const users = {}
+tanks = {}
+bullets = {}
 io.on('connection', socket => {
-  socket.on('new-user', name => {
-    users[socket.id] = name
-    socket.broadcast.emit('user-connected', name)
+  socket.on('new-user', () => {
+    tanks[socket.id] = new tankslogic.maketank(500,500,socket.id);
+    console.log(socket.id,' joined');
+    socket.broadcast.emit('log','recieved');
   })
-  socket.on('player-move', message => {
-    socket.broadcast.emit('player-move', { input:message, name: users[socket.id] })
+
+  socket.on('staterequest', (inputs) => {
+    socket.broadcast.emit('staterecieve',tanks,bullets);
+    try {
+      tanks[socket.id].input = inputs;
+      console.log(inputs)
+    } catch (error) {
+      console.log('fck')
+      tanks[socket.id] = new tankslogic.maketank(500,500,socket.id);
+      console.log(socket.id,' joined');
+    }
+    
   })
   socket.on('disconnect', () => {
-    socket.broadcast.emit('user-disconnected', users[socket.id])
-    delete users[socket.id]
+    delete tanks[socket.id];
   })
 })
+
+
+setInterval(tankslogic.updateGameArea, tickrate);
 
 app.get('/', function(req, res){
     res.render(`${__dirname}/templates/multiplayertanks.html`);

@@ -1,0 +1,212 @@
+const socket = io('http://localhost:1569')
+touchcontrols = false;
+touching = false;
+
+socket.emit('new-user');
+var events;
+
+function getstates(){
+    left=false;
+    right=false;
+    up=false;
+    down=false;
+    shoot=false;
+    if (gamearea.keys && gamearea.keys[65]) {left = true; }
+    if (gamearea.keys && gamearea.keys[68]) {right = true;}
+    if (gamearea.keys && gamearea.keys[87]) {up = true;}
+    if (gamearea.keys && gamearea.keys[83]) {down = true; }
+    if (gamearea.keys && gamearea.keys[32]){shoot=true;}
+    inputs = [left,right,up,down,shoot];
+    socket.emit('staterequest',inputs);
+}
+socket.on('staterecieve', (tanksstate,bulletsstate) => {
+    console.log('recieved state')
+    tanks = tanksstate;
+    bullets = bulletsstate;
+  })
+  
+socket.on('log', (message) => {
+  console.log(message);
+})
+function rendertanksbullets(colour) {
+    for (i=0;i<bullets[colour].length;i++){
+        renderonebullet(bullets[colour][i]);
+    }
+}
+function renderonebullet(bullet){
+    var ctx = gamearea.context;
+    var bulletimg = document.getElementById(bullet.colour + 'bullet');
+    bulletimg.width=bullet.width;
+    bulletimg.height=bullet.height;
+    ctx.setTransform(1, 0, 0, 1, bullet.x, bullet.y); // sets scale && origin
+    ctx.rotate(bullet.angle);
+    ctx.drawImage(bulletimg, bullet.width / -2, bullet.height / -2, bullet.width, bullet.height);
+    
+}
+function rendertank(tank) {
+    var ctx = gamearea.context;
+    var bulletimg = document.getElementById('bullet');
+    bulletimg.width=tank.width;
+    bulletimg.height=tank.height;
+    ctx.setTransform(1, 0, 0, 1, tank.x, tank.y); // sets scale && origin
+    ctx.rotate(tank.angle);
+    ctx.drawImage(bulletimg, tank.width / -2, tank.height / -2, tank.width, tank.height);
+    }
+function rendergamearea(){
+    gamearea.clear();    
+    for (var key in tanks) {
+        // check if the property/key is defined in the object itself, not in parent
+        if (tanks.hasOwnProperty(key)) {           
+            rendertanksbullets(tanks[key].colour);
+            rendertank(tanks[key].colour);
+            console.log('rendered ',tanks[key].colour);
+        }
+    }
+}
+
+function drawtouchcontrols(){
+    var ctx = gamearea.context;
+    var img = document.getElementById('uparrow');
+    img.width=gh;
+    img.height=gh;
+    // up
+    ctx.setTransform(1, 0, 0, 1, 0, gh*2.8);
+    ctx.drawImage(img, gh, gh, gw, 2*gh);
+
+    // right
+    ctx.setTransform(1, 0, 0, 1, gw*5.3+2*gh, gh*3.5);
+    ctx.rotate(90 * Math.PI / 180);
+    ctx.drawImage(img, gh, gh, gw, 2*gh);
+
+    // shoot button
+    var img = document.getElementById('shootimg');
+    img.width=gh;
+    img.height=gh;
+    ctx.setTransform(1, 0, 0, 1, gw*5-gh, gh/2); // sets scale && origin
+    ctx.drawImage(img, gh, gh, gh,gh);
+
+
+}
+
+scores = {};
+
+sounds = {};
+sounds['explosionsfx'] = [1,50];
+sounds['hitmarker'] = [1,200];
+sounds['shoot']=[1,200];
+
+function playsound(id){
+    if (nosound){
+        return 0
+    }
+    combine = id + sounds[id][0];
+    elbyid(id + sounds[id][0]).play();
+    sounds[id][0]++;
+    if (sounds[id][0] == sounds[id][1]){
+        sounds[id][0] = 1;
+    }
+}
+function elbyid(elementid){
+    return document.getElementById(elementid)
+}
+
+function startGame() {
+    backgroundcolour = '#ffffff';
+    bullets = {};
+    tanks = {};
+    gamearea.stop();
+    gamearea.canvasstart();
+    gh = gamearea.canvas.height / 6;
+    gw = gamearea.canvas.width / 6;
+    gamearea.start();
+}
+function keyup(e){
+    gamearea.keys[e.keyCode] = (e.type == "keydown");
+}
+function keydown(e){
+    e.preventDefault();
+    gamearea.keys = (gamearea.keys || []);
+    gamearea.keys[e.keyCode] = (e.type == "keydown");
+}
+function touchHandler(e) {
+    events = e
+    touchcontrols = true
+    touching = true
+    e.preventDefault();
+}
+function touchstop(e) {
+    events = e
+    e.preventDefault();
+    touching=false
+}
+var gamearea = {
+    canvas : document.getElementById("gamearea"),
+    canvasstart : function() {
+        this.canvas.style.width ='100%';
+        this.canvas.style.height='100%';
+        this.canvas.width  = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+    },
+    start : function() {
+        this.context = this.canvas.getContext("2d");
+        this.interval = setInterval(rendergamearea, 1);
+        this.stateinterval = setInterval(getstates, 10);
+    },
+    listeneron : function(){
+        window.addEventListener('keydown', keydown)
+        window.addEventListener('keyup', keyup)
+        el = gamearea.canvas;
+        el.addEventListener("touchstart", touchHandler);
+        el.addEventListener("touchmove", touchHandler);
+        el.addEventListener('touchcancel', touchstop);
+        el.addEventListener('touchend', touchstop);
+    },
+    listeneroff : function(){
+        window.removeEventListener('keydown', keydown)
+        window.removeEventListener('keyup',keyup )
+        el = gamearea.canvas;
+        el.removeEventListener("touchstart", touchHandler);
+        el.removeEventListener("touchmove", touchHandler);
+        el.rempveEventListener('touchcancel', touchstop);
+        el.removeEventListener('touchend', touchstop);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    },    
+    clear : function() {
+        ctx = this.context;
+        ctx.fillStyle = backgroundcolour;
+        ctx.fillRect(0,0, this.canvas.width*5, this.canvas.height*5);
+
+    }
+}
+
+
+
+function drawhealth(){
+    canvas = gamearea.canvas;
+    context = gamearea.context;
+    context.fillStyle = "other";
+    context.font = "bold 6vh Arial";
+
+    for (var key in tanks) {
+        // check if the property/key is defined in the object itself, not in parent
+        if (tanks.hasOwnProperty(key)) {           
+            context.fillText(tanks[key].health+'hp',tanks[key].x,tanks[key].y-gh);
+        }
+    }
+    
+}
+
+
+
+function fullscreen(){
+    var el = document.getElementById('gamearea');
+    if(el.webkitRequestFullScreen) {
+        el.webkitRequestFullScreen();
+    }
+    else {
+        el.mozRequestFullScreen();
+    }            
+}
+
