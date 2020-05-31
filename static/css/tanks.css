@@ -1,9 +1,22 @@
 
 body{
     background-color: lightcyan;
+    width: auto;
 }
 input.checkbox{
     transform: scale(3);
+}
+.scrolltop{
+    overflow-x: auto;
+    overflow-y: auto;
+    width: auto;
+    white-space: nowrap;
+}
+.scroll{
+    overflow-y: auto;
+    overflow-x: auto;
+    width: auto;
+    white-space: nowrap;w
 }
 .canvasgrid{
     display: grid;

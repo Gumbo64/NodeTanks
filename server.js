@@ -11,32 +11,35 @@ const tankslogic = require('./static/scripts/tankslogic');
 nunjucks.configure( '.', {
     autoescape: true,
     express: app
-} ) ;
+});
 gamearea = {};
+tanks = {};
+bullets = {};
 gamearea['canvas']={};
-gamearea.canvas.width = 1000;
-gamearea.canvas.height = 1000;
+gamewidth = 1000;
+gameheight=750;
+gamearea.canvas.width = gamewidth;
+gamearea.canvas.height = gameheight;
 
 app.set('view engine', 'nunjucks')
 app.use('/static', express.static('static'))
-tanks = {}
 bullets = {}
 io.on('connection', socket => {
   socket.on('new-user', () => {
-    tanks[socket.id] = new tankslogic.maketank(500,500,socket.id);
+    tanks[socket.id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),socket.id);
     console.log(socket.id,' joined');
-    socket.broadcast.emit('log','recieved');
+    socket.emit('identifier',socket.id);
   })
 
   socket.on('staterequest', (inputs) => {
-    socket.broadcast.emit('staterecieve',tanks,bullets);
+    socket.emit('states',tanks,bullets);
     try {
       tanks[socket.id].input = inputs;
-      console.log(inputs)
     } catch (error) {
       console.log('fck')
-      tanks[socket.id] = new tankslogic.maketank(500,500,socket.id);
+      tanks[socket.id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),socket.id);
       console.log(socket.id,' joined');
+      socket.emit('identifier',socket.id);
     }
     
   })

@@ -4,22 +4,22 @@
 <!--https://closure-compiler.appspot.com/home-->
 <title>Tanks</title>
 <script src="/static/scripts/socket.io.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="stylesheet" href="/static/css/tanks.css">
+<meta name="viewport" />
+
 <script defer src="/static/scripts/rendertanks.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
 <script src="https://cdn.jsdelivr.net/npm/reimprovejs@0/dist/reimprove.js"></script>
+<link rel="stylesheet" href="/static/css/tanks.css">
 </head>
 
 
-<body onload='startGame(); window.scrollTo(0, 0);'>
-    <canvas id='gamearea' height=1000 width=1000 onclick='gamearea.listeneron()'></canvas>
-<fieldset>
-    <h1 id='temp'>WASD + Space</h1>
-</fieldset>
+<body onload='startGame();'>
 
-<img id="red" src="/static/kevintank.png" width="220" height="277" hidden>
-<img id="blue" src="/static/tank.png" width="220" height="277" hidden>
+<canvas id='gamearea' height="750px" width="1000px" onclick='gamearea.listeneron()'></canvas>
+</div>
+<img id="tanks" src="/static/kevintank.png" width="220" height="277" hidden>
+<img id="tanks" src="/static/kevintank.png" width="220" height="277" hidden>
+<img id="client" src="/static/tank.png" width="220" height="277" hidden>
 <img id="uparrow" src="/static/botharrows.png" width="220" height="277" hidden>
 <img id="shootimg" src="/static/shootbutton.png" width="220" height="277" hidden>
 

@@ -1,8 +1,10 @@
 const socket = io('http://localhost:1569')
 touchcontrols = false;
 touching = false;
-
+tanks = {};
+bullets = {};
 socket.emit('new-user');
+var name = "unnamed";
 var events;
 
 function getstates(){
@@ -19,14 +21,13 @@ function getstates(){
     inputs = [left,right,up,down,shoot];
     socket.emit('staterequest',inputs);
 }
-socket.on('staterecieve', (tanksstate,bulletsstate) => {
-    console.log('recieved state')
+socket.on('states', (tanksstate,bulletsstate) => {
     tanks = tanksstate;
     bullets = bulletsstate;
-  })
+})
   
-socket.on('log', (message) => {
-  console.log(message);
+socket.on('identifier', (socketid) => {
+  clientname = socketid;
 })
 function rendertanksbullets(colour) {
     for (i=0;i<bullets[colour].length;i++){
@@ -35,7 +36,7 @@ function rendertanksbullets(colour) {
 }
 function renderonebullet(bullet){
     var ctx = gamearea.context;
-    var bulletimg = document.getElementById(bullet.colour + 'bullet');
+    var bulletimg = document.getElementById('bullet');
     bulletimg.width=bullet.width;
     bulletimg.height=bullet.height;
     ctx.setTransform(1, 0, 0, 1, bullet.x, bullet.y); // sets scale && origin
@@ -45,23 +46,36 @@ function renderonebullet(bullet){
 }
 function rendertank(tank) {
     var ctx = gamearea.context;
-    var bulletimg = document.getElementById('bullet');
-    bulletimg.width=tank.width;
-    bulletimg.height=tank.height;
+    if (tank.colour == clientname){
+        var tankimg = document.getElementById('client');
+        //window.scrollTo(tank.x-tank.width*7,tank.y-tank.height*7);
+    }else{
+        var tankimg = document.getElementById('tanks');
+    }
+    tankimg.width=tank.width;
+    tankimg.height=tank.height;
     ctx.setTransform(1, 0, 0, 1, tank.x, tank.y); // sets scale && origin
     ctx.rotate(tank.angle);
-    ctx.drawImage(bulletimg, tank.width / -2, tank.height / -2, tank.width, tank.height);
-    }
+    ctx.drawImage(tankimg, tank.width / -2, tank.height / -2, tank.width, tank.height);
+}
+function wiper() {
+    var ctx = gamearea.context;
+    height = 0;
+    width = 0;
+    var tankimg = document.getElementById('client');
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // sets scale && origin
+    ctx.drawImage(tankimg, width / -2, height / -2, width, height);
+}
 function rendergamearea(){
-    gamearea.clear();    
+    gamearea.clear();
     for (var key in tanks) {
         // check if the property/key is defined in the object itself, not in parent
         if (tanks.hasOwnProperty(key)) {           
             rendertanksbullets(tanks[key].colour);
-            rendertank(tanks[key].colour);
-            console.log('rendered ',tanks[key].colour);
+            rendertank(tanks[key]);
         }
     }
+    wiper();
 }
 
 function drawtouchcontrols(){

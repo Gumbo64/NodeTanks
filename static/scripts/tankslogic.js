@@ -1,87 +1,91 @@
-exports.updateGameArea = function() {
-    for (i=0;i>tanks.length;i++){
-        actions = tanks[i].input;
-        left = actions[0];
-        right=actions[1];
-        up=actions[2];
-        down=actions[3];
-        shoot=actions[4];
-        if (up){
-            tanks[i].speed = 1;
-        }
-        if (down){
-            tanks[i].speed = -1;
-        }
-        if (left){
-            tanks[i].moveAngle = -1;
-        }
-        if (right){
-            tanks[i].moveAngle = 1;
-        }
-        if (shoot){
-            tanks[i].shoot();
-        }
-        tanks[i].updatebullets();
-        tanks[i].newPos();
-    }
 
+frictioncollision=false;
+
+
+exports.updateGameArea = function() {
+    for (var i in tanks) {
+        // check if the property/key is defined in the object itself, not in parent
+        if (tanks.hasOwnProperty(i)) {           
+            actions = tanks[i].input;
+            left = actions[0];
+            right=actions[1];
+            up=actions[2];
+            down=actions[3];
+            shoot=actions[4];
+            if (up){
+                tanks[i].speed = 1;
+            }else{
+                if (down){
+                    tanks[i].speed = -1;
+                }else{
+                    tanks[i].speed=0;
+                }
+            }
+            if (left){
+                tanks[i].moveAngle = -1;
+            }else{
+                if (right){
+                    tanks[i].moveAngle = 1;
+                }else{
+                    tanks[i].moveAngle=0;
+                }
+            }
+            if (shoot){
+                tanks[i].shoot();
+            }
+            updatetanksbullets(i,tanks[i].maxbullets)
+            tanks[i].newPos();
+            tanks[i].input=[false,false,false,false,false];
+        }
+    }
 }
 exports.maketank = function(x, y, colour) {
+    this.lastshoot = Date.now();
     this.input = [false,false,false,false,false]
     this.colour = colour;
     bullets[colour]=[];
+    this.height=50;
+    this.width=50;
+    this.health=4;
     this.angle = 0;
     this.moveAngle = 0;
     this.speed = 0;
     this.x = x;
     this.y = y;
+    this.speedmult = 3;
+    this.bulletspeed = 3;
+    this.moveanglemult = 4;
+    this.maxbullets = 10;
+    this.firerate = 100;
+    this.bulletheight=40;
+    this.bulletwidth=60;
     this.damage = function(){
         this.health = this.health -0.5;
     }
     this.shoot = function() {
-        append = new bullet(this.colour);
-        bullets[this.colour].push(append);
+        if (Date.now() - this.lastshoot >= this.firerate){
+            append = new bullet(this.bulletwidth,this.bulletheight,this.x,this.y,this.angle,this.bulletspeed,this.colour);
+            bullets[this.colour].push(append);
+            this.lastshoot=Date.now()
+        }
     }
     this.corners = function() {
         return findcorners(this.x,this.y,this.angle,this.width,this.height);
     }
-    this.update = function() {
-        var ctx = gamearea.context;
-        if (this.colour == "wiper"){
-            var tankimg = document.getElementById('client');
-            tankimg.width=this.width;
-            tankimg.height=this.height;
-            this.height=0;
-            this.width=0;
-        }else{
-            var tankimg = document.getElementById(this.colour);
-            tankimg.width=this.width;
-            tankimg.height=this.height;
-        }
-        if (!this.health <= 0){
-            ctx.setTransform(1, 0, 0, 1, this.x, this.y); // sets scale && origin
-            ctx.rotate(this.angle);
-            ctx.drawImage(tankimg, this.width / -2, this.height / -2, this.width, this.height);
-        }
-    } 
+    
     this.othercorners = function(){
-        tankslength = tanks.length;
-        var i;
         var othercorners = [];
-        for (i = 0; i < tankslength; i++) {
-            if (this.colour != tanks[i].colour && tanks[i].colour != "wiper" && tanks[i].health >0){
-                append = tanks[i].corners();
-                append.push(tanks[i].colour)
-                othercorners.push(append);
+        for (var i in tanks) {
+            // check if the property/key is defined in the object itself, not in parent
+            if (tanks.hasOwnProperty(i)) {           
+                if (this.colour != tanks[i].colour && tanks[i].health >0){
+                    append = tanks[i].corners();
+                    append.push(tanks[i].colour)
+                    othercorners.push(append);
+                }
             }
         }
         return othercorners;
-    }
-    this.updatebullets = function() {
-        for (i=0;i<bullets[this.colour].length;i++){
-            bullets[this.colour][i].newPos(this.othercorners());
-        }
-        bullets[this.colour].splice(0, bullets[this.colour].length-this.maxbullets);
     }
     
     this.newPos = function() {
@@ -218,7 +222,7 @@ function bullet(width, height, x, y, angle, speed, colour) {
                     if (doIntersect(ourcorners[i],ourcorners[nexti],othercorners[j][k],othercorners[j][nextk])){
                         for (var p in tanks) {
                             // check if the property/key is defined in the object itself, not in parent
-                            if (tanks.hasOwnProperty(key)) {           
+                            if (tanks.hasOwnProperty(p)) {           
                                 if (tanks[p].colour == othercorners[j][4]){
                                     tanks[p].damage();
                                 }
@@ -290,4 +294,10 @@ function findcorners(xpos, ypos, angle, width, height) {
     corner3 = GetPointRotated(xpos, ypos, width, height, angle, width/2, -height/2);
     corner4 = GetPointRotated(xpos, ypos, width, height, angle, -width/2, -height/2);
     return [corner1,corner2,corner4,corner3];
+}
+function updatetanksbullets(colour,maxbullets) {
+    for (i=0;i<bullets[colour].length;i++){
+        bullets[colour][i].newPos(tanks[colour].othercorners());
+    }
+    bullets[colour].splice(0, bullets[colour].length-maxbullets);
 }
