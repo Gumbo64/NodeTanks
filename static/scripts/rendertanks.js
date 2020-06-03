@@ -1,10 +1,13 @@
-const socket = io('http://localhost:1569')
+port = "http://" + ipadress + ":1569";
+const socket = io(port)
 touchcontrols = false;
 touching = false;
 tanks = {};
 bullets = {};
+
+
 socket.emit('new-user');
-var name = "unnamed";
+var clientname = "unnamed";
 var events;
 
 function getstates(){
@@ -39,7 +42,7 @@ function renderonebullet(bullet){
     var bulletimg = document.getElementById('bullet');
     bulletimg.width=bullet.width;
     bulletimg.height=bullet.height;
-    ctx.setTransform(1, 0, 0, 1, bullet.x, bullet.y); // sets scale && origin
+    ctx.setTransform(1, 0, 0, 1, bullet.x-clienttankx+centerx, bullet.y-clienttanky+centery); // sets scale && origin
     ctx.rotate(bullet.angle);
     ctx.drawImage(bulletimg, bullet.width / -2, bullet.height / -2, bullet.width, bullet.height);
     
@@ -54,7 +57,7 @@ function rendertank(tank) {
     }
     tankimg.width=tank.width;
     tankimg.height=tank.height;
-    ctx.setTransform(1, 0, 0, 1, tank.x, tank.y); // sets scale && origin
+    ctx.setTransform(1, 0, 0, 1, tank.x-clienttankx+centerx, tank.y-clienttanky+centery); // sets scale && origin
     ctx.rotate(tank.angle);
     ctx.drawImage(tankimg, tank.width / -2, tank.height / -2, tank.width, tank.height);
 }
@@ -66,16 +69,34 @@ function wiper() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); // sets scale && origin
     ctx.drawImage(tankimg, width / -2, height / -2, width, height);
 }
+function background() {
+    var ctx = gamearea.context;
+    height = 10000 + 1000;
+    width = 10000 + 1100;
+    var tankimg = document.getElementById('background');
+
+    for (i=0;i<Math.ceil(width/tankimg.width);i++){
+        for (j=0;j<Math.ceil(height/tankimg.height);j++){
+            ctx.setTransform(1, 0, 0, 1, i*tankimg.width-clienttankx, j*tankimg.height-clienttanky); // sets scale && origin
+            ctx.drawImage(tankimg,0, 0, tankimg.width,tankimg.height);
+        }
+    }
+}
 function rendergamearea(){
+    clienttankx=tanks[clientname].x;
+    clienttanky=tanks[clientname].y;
     gamearea.clear();
+    background();
     for (var key in tanks) {
         // check if the property/key is defined in the object itself, not in parent
         if (tanks.hasOwnProperty(key)) {           
             rendertanksbullets(tanks[key].colour);
             rendertank(tanks[key]);
         }
+        
     }
     wiper();
+    
 }
 
 function drawtouchcontrols(){
@@ -156,12 +177,12 @@ function touchstop(e) {
 var gamearea = {
     canvas : document.getElementById("gamearea"),
     canvasstart : function() {
-        this.canvas.style.width ='100%';
-        this.canvas.style.height='100%';
-        this.canvas.width  = this.canvas.offsetWidth;
-        this.canvas.height = this.canvas.offsetHeight;
+        this.canvas.width  = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     },
     start : function() {
+        centerx = gamearea.canvas.width/2;
+        centery = gamearea.canvas.height/2;
         this.context = this.canvas.getContext("2d");
         this.interval = setInterval(rendergamearea, 1);
         this.stateinterval = setInterval(getstates, 10);

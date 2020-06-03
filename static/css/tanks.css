@@ -1,8 +1,8 @@
 
-body{
-    background-color: lightcyan;
-    width: auto;
-}
+body {
+    margin:0;
+    overflow: hidden;
+} 
 input.checkbox{
     transform: scale(3);
 }
@@ -11,6 +11,9 @@ input.checkbox{
     overflow-y: auto;
     width: auto;
     white-space: nowrap;
+}
+.noBorder {
+    border:none !important;
 }
 .scroll{
     overflow-y: auto;

@@ -2,8 +2,12 @@ const express = require('express')
 const app = express()
 const path = require('path');
 const nunjucks = require('nunjucks');
+const ip = require('ip');
+ 
+const ipadress = ip.address();
+console.log(ipadress);
 const ioport = 1569;
-const port = 5000;
+const port = 80;
 const tickrate = 10;
 const io = require('socket.io')(ioport);
 const tankslogic = require('./static/scripts/tankslogic');
@@ -16,8 +20,8 @@ gamearea = {};
 tanks = {};
 bullets = {};
 gamearea['canvas']={};
-gamewidth = 1000;
-gameheight=750;
+gamewidth = 10000;
+gameheight= 10000;
 gamearea.canvas.width = gamewidth;
 gamearea.canvas.height = gameheight;
 
@@ -52,7 +56,7 @@ io.on('connection', socket => {
 setInterval(tankslogic.updateGameArea, tickrate);
 
 app.get('/', function(req, res){
-    res.render(`${__dirname}/templates/multiplayertanks.html`);
+    res.render(`${__dirname}/templates/multiplayertanks.html`, {ipadress: ipadress});
 })
 
 app.listen(port, function(){

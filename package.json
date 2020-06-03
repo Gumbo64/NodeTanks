@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Gumbo64/Notetaker-and-tanks#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "ip": "^1.1.5",
     "nunjucks": "^3.2.1",
     "pug": "^2.0.4",
     "socket.io": "^2.3.0"

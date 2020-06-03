@@ -5,28 +5,26 @@
 <title>Tanks</title>
 <script src="/static/scripts/socket.io.js"></script>
 <meta name="viewport" />
+<script>
+    const ipadress = "{{ ipadress }}";
+</script>
 
 <script defer src="/static/scripts/rendertanks.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script>
-<script src="https://cdn.jsdelivr.net/npm/reimprovejs@0/dist/reimprove.js"></script>
 <link rel="stylesheet" href="/static/css/tanks.css">
 </head>
 
 
-<body onload='startGame();'>
+<body onload='startGame();' class='noBorder'>
 
-<canvas id='gamearea' height="750px" width="1000px" onclick='gamearea.listeneron()'></canvas>
+<canvas id='gamearea' onclick='gamearea.listeneron()' ></canvas>
 </div>
-<img id="tanks" src="/static/kevintank.png" width="220" height="277" hidden>
 <img id="tanks" src="/static/kevintank.png" width="220" height="277" hidden>
 <img id="client" src="/static/tank.png" width="220" height="277" hidden>
 <img id="uparrow" src="/static/botharrows.png" width="220" height="277" hidden>
 <img id="shootimg" src="/static/shootbutton.png" width="220" height="277" hidden>
+<img id="background" src="/static/blackcogs.png" hidden>
 
 <img id="walls" src="/static/black.png" width="220" height="277" hidden>
-<div id='AudioSpamBecauseJavascriptCantOverlapSoundsSoIHaveToCycleThroughMultiple'>
-
-
-<img id="bullet" src="/static/dart.png" width="220" height="277" hidden>
+<img id="bullet" src="/static/realbullet.png" width="220" height="277" hidden>
 </body>
 </html>
