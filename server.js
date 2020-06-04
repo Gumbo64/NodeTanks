@@ -3,7 +3,7 @@ const app = express()
 const path = require('path');
 const nunjucks = require('nunjucks');
 const ip = require('ip');
- 
+const { Worker, isMainThread, parentPort } = require('worker_threads');
 const ipadress = ip.address();
 console.log(ipadress);
 const ioport = 1569;

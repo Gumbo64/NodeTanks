@@ -20,6 +20,7 @@ if (isMainThread) {
     worker.postMessage(13231);
     worker.postMessage(3);
     worker2.postMessage(20);
+
 } else {
     // Secondary Threads
     // When a message from the parent thread is received, send it back:
