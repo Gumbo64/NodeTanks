@@ -1,31 +1,29 @@
-const { Worker, isMainThread, parentPort } = require('worker_threads');
+const { Worker, isMainThread, parentPort,workerData } = require('worker_threads');
+const tankslogic = require('./static/scripts/tankslogic');
 
-if (isMainThread) {
-    // Main Thread
-
-    // Makes the worker
-    const worker = new Worker(__filename);
-    const worker2 = new Worker(__filename);
-    
-
-    // What reaction to have when u recieve a postmessage from worker
-    worker.on('message', (message) => {
-        console.log(message);  // Prints 'Hello, world!'.
-    });
-    // What reaction to have when u recieve a postmessage from worker2
-    worker2.on('message', (message) => {
-        console.log(message);  // Prints 'Hello, world!'.
-    });
-    // tell worker to do it
-    worker.postMessage(13231);
-    worker.postMessage(3);
-    worker2.postMessage(20);
-
-} else {
-    // Secondary Threads
-    // When a message from the parent thread is received, send it back:
-    parentPort.on('message', (message) => {
-        result = message ** 2;
-        parentPort.postMessage(result);
-    });
-}
+  if (isMainThread) {
+    module.exports = function(script) {
+      return new Promise((resolve, reject) => {
+        const worker = new Worker(__filename, {
+          workerData: script
+        });
+        worker.on('message', function(s){resolve(s)});
+        worker.on('error', function(s){reject(s)});
+        worker.on('exit', (code) => {
+          if (code !== 0)
+            reject(new Error(`Worker stopped with exit code ${code}`));
+        });
+      });
+    };
+  } else {
+    states = workerData;
+    tanks = states[0];
+    bullets = states[1];
+    returns = [];
+    for (i=2;i<states.length;i++){
+      tankslogic.updateone(states[i]);
+      returns.push([tanks[i],bullets[i],i]);
+    }
+    parentPort.postMessage(returns);
+  }
+  

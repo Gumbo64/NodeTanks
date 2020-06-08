@@ -89,7 +89,8 @@ function rendergamearea(){
     background();
     for (var key in tanks) {
         // check if the property/key is defined in the object itself, not in parent
-        if (tanks.hasOwnProperty(key)) {           
+        if (tanks.hasOwnProperty(key)) {      
+                 
             rendertanksbullets(tanks[key].colour);
             rendertank(tanks[key]);
         }
