@@ -168,39 +168,41 @@ function tanknewPos(giventank) {
 
 exports.updateGameArea = function() {
     for (var i in tanks) {
-        // check if the property/key is defined in the object itself, not in parent
-        if (tanks.hasOwnProperty(i)) {           
-            actions = tanks[i].input;
-            left = actions[0];
-            right=actions[1];
-            up=actions[2];
-            down=actions[3];
-            shoot=actions[4];
-            if (up){
-                tanks[i].speed = 1;
+     updatesingle(i)
+    }
+}
+function updatesingle(i){
+    // check if the property/key is defined in the object itself, not in parent
+    if (tanks.hasOwnProperty(i)) {  
+        actions = tanks[i].input;
+        left = actions[0];
+        right=actions[1];
+        up=actions[2];
+        down=actions[3];
+        shoot=actions[4];
+        if (up){
+            tanks[i].speed = 1;
+        }else{
+            if (down){
+                tanks[i].speed = -1;
             }else{
-                if (down){
-                    tanks[i].speed = -1;
-                }else{
-                    tanks[i].speed=0;
-                }
+                tanks[i].speed=0;
             }
-            if (left){
-                tanks[i].moveAngle = -1;
-            }else{
-                if (right){
-                    tanks[i].moveAngle = 1;
-                }else{
-                    tanks[i].moveAngle=0;
-                }
-            }
-            if (shoot){
-                tankshoot(tanks[i]);
-            }
-            updatetanksbullets(i,tanks[i].maxbullets)
-            tanknewPos(tanks[i]);
-            // tanks[i].input=[false,false,false,false,false];
         }
+        if (left){
+            tanks[i].moveAngle = -1;
+        }else{
+            if (right){
+                tanks[i].moveAngle = 1;
+            }else{
+                tanks[i].moveAngle=0;
+            }
+        }
+        if (shoot){
+            tankshoot(tanks[i]);
+        }
+        updatetanksbullets(i,tanks[i].maxbullets)
+        tanknewPos(tanks[i]);
     }
 }
 exports.updateone = function(i){

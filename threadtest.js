@@ -15,18 +15,21 @@ const {
         worker.postMessage(script);
       })
     };
-    value = true
-    // (async function(){
-      setTimeout(async function a() {
-        value = await workering(value);
-        console.log(value)
-        setTimeout(a, 0);
-      }, 100);
-    // })
+    value = [1,2,3,4,5,6,7,4,7]
+    setTimeout(async function a() {
+      // value = await workering(value);
+      lasttime = Date.now()
+      value = await Promise.all(value.map(workering))
+      // value = await Promise.all([1,2,3,4,5,6,7,4,7].map(x => x*2))
+      // console.log(Date.now()-lasttime);
+      console.log(value)
+      setTimeout(a, 0);
+    }, 100);
+    
     
   } else {
     parentPort.on('message',function(a){
-      parentPort.postMessage(!a);
+      parentPort.postMessage(a*2);
     })
     
   }

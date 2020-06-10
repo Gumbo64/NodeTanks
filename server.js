@@ -9,7 +9,7 @@ const ipadress = ip.address();
 console.log(ipadress);
 const ioport = 1569;
 const port = 80;
-const tickrate =10;
+const tickrate =100;
 const io = require('socket.io')(ioport);
 const tankslogic = require('./static/scripts/tankslogic');
 const threadingpack = require('./multithreading')
@@ -42,12 +42,7 @@ io.on('connection', socket => {
   socket.on('staterequest', (inputis) => {
     socket.emit('states',tanks,bullets);
     try {
-      if (multithreading){
-        inputs[socket.id] = inputis;
-      }else{
-        tanks[socket.id].input=inputis;
-      }
-     
+      tanks[socket.id].input=inputis; 
     } catch (error) {
       socket.emit('identifier',socket.id);
       handleNew(socket.id);
@@ -57,16 +52,30 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     //delete workers[socket.id];
     console.log(socket.id,' disconnected')
-
     delete tanks[socket.id];
     delete bullets[socket.id];
   })
 })
-
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 multithreading=true;
 if (multithreading){
-  setInterval(threadupdatehandle, tickrate);
+  async function a() {
+    lasttime = Date.now();
+    await threadupdatehandle()
+    console.log('done')
+    a()
+    // console.log(Date.now()-lasttime);
+  }
+  while(true){
+    a();
+    console.log('das')
+  }
+  function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 }else{
   setInterval(tankslogic.updateGameArea, tickrate);
 }
@@ -83,42 +92,44 @@ function handleNew(id){
   tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id);
   console.log(id,' joined');
 }
-function sendworker(o){
-  let worker = new Worker('./multithreading.js', {
-    workerData: [tanks,bullets,o,]
-  });
-  worker.once('message', function(states){return states;});
-  worker.once('error', function(s){return false});
-}
-async function threadupdatehandle(){
-    let cputotals = [];
-    let cpu = 0
-    let appendit = false;
-    for (var i in tanks) {
-      if (tanks.hasOwnProperty(i)) {
-        if (!appendit){
-          cputotals.push([tanks,bullets,i]);
-        }else{
-          cputotals[cpu].push(i);
-        }
-        cpu++;
-        if (cpu>userCPUCount-1){
+function threadupdatehandle(){
+  return new Promise(resolve => {
+    // console.log('dsasddsa');
+    (async () => {
+      let cputotals = [];
+      let cpu = 0
+      let appendit = false;
+      for (var i in tanks) {
+        if (tanks.hasOwnProperty(i)) {
           if (!appendit){
-            appendit = true;
+            cputotals.push([tanks,bullets,i]);
+          }else{
+            cputotals[cpu].push(i);
           }
-          cpu=0;
+          cpu++;
+          if (cpu>userCPUCount-2){
+            if (!appendit){
+              appendit = true;
+            }
+            cpu=0;
+          }
         }
       }
-    }
-    console.log(cputotals)
-    //let result = Promise.all(cputotals.map(threadingpack)).then((a)=>console.log(a))
-    // for (i=0;i<result.length;i++){
-    //   for (j=0;j<result[i].length;j++){
-    //     let colour = result[i][j][2];
-    //     tanks[colour] = result[i][j][0];
-    //     bullets[colour] = result[i][j][1];
-    //   }
-    // }
-
+      // console.log(cputotals)
+      lasttime = Date.now();
+      // console.log('going in')
+      let result = await Promise.all(cputotals.map(threadingpack))
+      console.log(result)
+      // console.log(Date.now()-lasttime);
+      for (i=0;i<result.length;i++){
+        for (j=0;j<result[i].length;j++){
+          let colour = result[i][j][2];
+          tanks[colour] = result[i][j][0];
+          bullets[colour] = result[i][j][1];
+        }
+      }
+      resolve();
+    })();
+  });
 }
 
