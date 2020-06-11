@@ -2,24 +2,13 @@ const { Worker, isMainThread, parentPort,workerData } = require('worker_threads'
 workerid = require('worker_threads').threadId;
 console.log(workerid)
   if (isMainThread) {
-    module.exports = function(script) {
-      return new Promise((resolve, reject) => {
-        const worker = new Worker(__filename, {
-          workerData: script
-        });
-        worker.once('message', function(s){resolve(s)});
-        worker.once('error', function(s){console.log(s);reject(s)});
-        worker.once('exit', (code) => {
-          if (code !== 0)
-            console.log(code)
-            reject(new Error(`Worker stopped with exit code ${code}`));
-        });
-      });
-    };
+      
+        console.log('main thread messed up')
+      
   } else {
     const tankslogic = require('./static/scripts/tankslogic');
-    (async () => {
-      clonedata = [ workerData ]
+    parentPort.on('message',(states)=>{
+      clonedata = [ states ]
       clonedata=clonedata[0]
       // console.log(clonedata)
       tanks =  clonedata[0];
@@ -38,8 +27,7 @@ console.log(workerid)
       }
       // console.log(tanks)
       parentPort.postMessage(returns);
-      
       // console.log('closed', returns, "end")
-    })();
+    })
   }
   

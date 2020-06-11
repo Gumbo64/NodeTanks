@@ -19,8 +19,17 @@ nunjucks.configure( '.', {
     autoescape: true,
     express: app
 });
-
+workerlist = [];
 userCPUCount = os.cpus().length;
+for (i=0;i<userCPUCount-2;i++){
+  workerlist.push(new Worker('./multithreading.js'))
+  workerlist[i].on('message',(states)=>{threadreturn(states)})
+  workerlist[i].on('error', function(s){console.log(s)});
+  workerlist[i].on('exit', (code) => {
+    if (code !== 0)
+      console.log(code)
+  });
+}
 inputs = {};
 tanks = {};
 bullets = {};
@@ -72,7 +81,7 @@ multithreading=true;
 if (multithreading){
   async function a() {
     lasttime = Date.now();
-    await threadupdatehandle()
+    await threadsend();
     await sleep(tickrate)
     a();
     // console.log(Date.now()-lasttime);
@@ -82,20 +91,13 @@ if (multithreading){
 }else{
   setInterval(tankslogic.updateGameArea, tickrate);
 }
-
-
-function handleNew(id){
-  tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id);
-  console.log(id,' joined');
-}
-function threadupdatehandle(){
-  return new Promise(resolve => {
-    // console.log('dsasddsa');
+function threadsend(){
+  return new Promise((resolve) => {
     (async () => {
       let cputotals = [];
       let cpu = 0
       let appendit = false;
-      for (var i in tanks) {
+      for (var i in tanks){
         if (tanks.hasOwnProperty(i)) {
           if (!appendit){
             cputotals.push([tanks,bullets,i]);
@@ -111,22 +113,35 @@ function threadupdatehandle(){
           }
         }
       }
-      // console.log(cputotals)
-      lasttime = Date.now();
-      // console.log('going in')
-      // console.log(cputotals)
-      let result = await Promise.all(cputotals.map(threadingpack))
-      // console.log(result)
-      // console.log(Date.now()-lasttime);
-      for (i=0;i<result.length;i++){
-        for (j=0;j<result[i].length;j++){
-          let colour = result[i][j][2];
-          tanks[colour] = result[i][j][0];
-          bullets[colour] = result[i][j][1];
-        }
-      }
+      await sendstate(cputotals)
       resolve();
     })();
-  });
+  })
 }
+function sendstate(cputotals){
+  return new Promise((resolve) => {
+    for (i=0;i<cputotals.length;i++){
+      workerlist[i].postMessage(cputotals[i])
+    }
+    resolve()
+  })
+}
+function threadreturn(result){
+  return new Promise((resolve) => {
+    for (i=0;i<result.length;i++){
+      for (j=0;j<result[i].length;j++){
+        let colour = result[i][j][2];
+        tanks[colour] = result[i][j][0];
+        bullets[colour] = result[i][j][1];
+      }
+    }
+    resolve()
+  })
+}
+
+function handleNew(id){
+  tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id);
+  console.log(id,' joined');
+}
+
 
