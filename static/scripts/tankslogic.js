@@ -5,28 +5,32 @@ gameheight= 10000;
 gamearea.canvas.width = gamewidth;
 gamearea.canvas.height = gameheight;
 frictioncollision=false;
-function tankdamage(giventank){
-    giventank.health = giventank.health -0.5;
+function tankdamage(z){
+    tanks[z].health = tanks[z].health -0.5;
 }
-function tankshoot(giventank) {
-    if (Date.now() - giventank.lastshoot >= giventank.firerate){
-        append = new bullet(giventank.bulletwidth,giventank.bulletheight,giventank.x,giventank.y,giventank.angle,giventank.bulletspeed,giventank.colour);
-        bullets[giventank.colour].push(append);
-        giventank.lastshoot=Date.now()
+function tankshoot(z) {
+    if (Date.now() - tanks[z].lastshoot >= tanks[z].firerate){
+        append = new bullet(tanks[z].bulletwidth,tanks[z].bulletheight,tanks[z].x,tanks[z].y,tanks[z].angle,tanks[z].bulletspeed,tanks[z].colour);
+        bullets[z].push(append);
+        tanks[z].lastshoot=Date.now();
     }
 }
-function tankcorners(giventank){
-    return findcorners(giventank.x,giventank.y,giventank.angle,giventank.width,giventank.height);
+function tankcorners(z){
+    return findcorners(tanks[z].x,tanks[z].y,tanks[z].angle,tanks[z].width,tanks[z].height);
 }
-
-function tankothercorners(giventank){
-    var othercorners = [];
+function bulletcorners(z,c){
+    return findcorners(bullets[z][c].x,bullets[z][c].y,bullets[z][c].angle,bullets[z][c].width,bullets[z][c].height);
+}
+function tankothercorners(p){
+    let othercorners = [];
     for (var i in tanks) {
         // check if the property/key is defined in the object itself, not in parent
-        if (tanks.hasOwnProperty(i)) {           
-            if (giventank.colour != tanks[i].colour && tanks[i].health >0){
-                append = tankcorners(tanks[i]);
-                append.push(tanks[i].colour)
+        if (tanks.hasOwnProperty(i)) {   
+            // console.log(tanks);
+            // console.log(i)
+            if ((p != i) && (tanks[i].health > 0)){
+                let append = tankcorners(i);
+                append.push(i)
                 othercorners.push(append);
             }
         }
@@ -35,10 +39,10 @@ function tankothercorners(giventank){
 }
 
     
-function bulletnewPos(givenbullet,othercorners) {
-    givenbullet.x +=  givenbullet.speed * Math.sin(givenbullet.angle);
-    givenbullet.y -=  givenbullet.speed * Math.cos(givenbullet.angle);
-    var ourcorners = tankcorners(givenbullet);
+function bulletnewPos(z,c,othercorners) {
+    bullets[z][c].x +=  bullets[z][c].speed * Math.sin(bullets[z][c].angle);
+    bullets[z][c].y -=  bullets[z][c].speed * Math.cos(bullets[z][c].angle);
+    var ourcorners = bulletcorners(z,c);
     var othercorners = othercorners;
     var i;
     var nexti;
@@ -66,29 +70,29 @@ function bulletnewPos(givenbullet,othercorners) {
                             }
                         }
                     }
-                    givenbullet.x = -9999999999;
-                    givenbullet.y = -9999999999;
-                    givenbullet.angle = 0;                  
+                    bullets[z][c].x = -9999999999;
+                    bullets[z][c].y = -9999999999;
+                    bullets[z][c].angle = 0;                  
                 }
             }
         }
     }      
 }
 
-function tanknewPos(giventank) {
-    if (giventank.health <= 0){
-        giventank.x = -99999999;
-        giventank.y = -99999999;
+function tanknewPos(z) {
+    if (tanks[z].health <= 0){
+        tanks[z].x = -99999999;
+        tanks[z].y = -99999999;
         return 'ded';
     }
-    giventank.angle += giventank.moveAngle * giventank.moveanglemult * Math.PI / 180;
-    giventank.x += giventank.speedmult * giventank.speed * Math.sin(giventank.angle);
-    giventank.y -= giventank.speedmult * giventank.speed * Math.cos(giventank.angle);
-    var ourcorners = tankcorners(giventank);
-    var othercorners = tankothercorners(giventank);
+    tanks[z].angle += tanks[z].moveAngle * tanks[z].moveanglemult * Math.PI / 180;
+    tanks[z].x += tanks[z].speedmult * tanks[z].speed * Math.sin(tanks[z].angle);
+    tanks[z].y -= tanks[z].speedmult * tanks[z].speed * Math.cos(tanks[z].angle);
+    var ourcorners = tankcorners(z);
+    var othercorners = tankothercorners(z);
     var i;
     var nexti;
-    /* giventank for loop checks collision with other tanks*/
+    /* z for loop checks collision with other tanks*/
     
     /* for each diagonal on our tank...   */
     for (i = 0; i < ourcorners.length; i++) {
@@ -110,28 +114,28 @@ function tanknewPos(giventank) {
                 }
                 if (doIntersect(ourcorners[i],ourcorners[nexti],othercorners[j][k],othercorners[j][nextk])){
                     if (frictioncollision){
-                        giventank.angle -= giventank.moveAngle * Math.PI / 180;
-                        giventank.x -= giventank.speedmult * giventank.speed * Math.sin(giventank.angle);
-                        giventank.y += giventank.speedmult * giventank.speed * Math.cos(giventank.angle);
+                        tanks[z].angle -= tanks[z].moveAngle * Math.PI / 180;
+                        tanks[z].x -= tanks[z].speedmult * tanks[z].speed * Math.sin(tanks[z].angle);
+                        tanks[z].y += tanks[z].speedmult * tanks[z].speed * Math.cos(tanks[z].angle);
                     }else{
-                        timeoutmax = 2 * giventank.speed;
-                        if (giventank.speed==0){
+                        timeoutmax = 2 * tanks[z].speed;
+                        if (tanks[z].speed==0){
                         }else{
-                            if (giventank.speed<0){
-                                giventank.speed = -1;
+                            if (tanks[z].speed<0){
+                                tanks[z].speed = -1;
                             }else{
-                                giventank.speed=1;
+                                tanks[z].speed=1;
                             }
                         }
                         colliding = true;
-                        xmove = giventank.speed * Math.sin(giventank.angle);
-                        ymove = giventank.speed * Math.cos(giventank.angle);
+                        xmove = tanks[z].speed * Math.sin(tanks[z].angle);
+                        ymove = tanks[z].speed * Math.cos(tanks[z].angle);
                         timeout = 0;
                         while (colliding){
-                            ourcorners = tankcorners(giventank);
-                            othercorners =tankothercorners(giventank);
-                            giventank.x -= xmove;
-                            giventank.y += ymove;
+                            ourcorners = tankcorners(z);
+                            othercorners =tankothercorners(z);
+                            tanks[z].x -= xmove;
+                            tanks[z].y += ymove;
                             colliding = doIntersect(ourcorners[i],ourcorners[nexti],othercorners[j][k],othercorners[j][nextk]);
                             timeout++;
                             if (timeout>100){
@@ -150,16 +154,16 @@ function tanknewPos(giventank) {
     var i;
     for (i = 0; i < ourcorners.length; i++) {
         if (ourcorners[i].x > gamearea.canvas.width){
-            giventank.x = gamearea.canvas.width-(ourcorners[i].x-giventank.x);
+            tanks[z].x = gamearea.canvas.width-(ourcorners[i].x-tanks[z].x);
         }
         if (ourcorners[i].x < 0) {
-            giventank.x = giventank.x-ourcorners[i].x;
+            tanks[z].x = tanks[z].x-ourcorners[i].x;
         }
         if (ourcorners[i].y > gamearea.canvas.height){
-            giventank.y = gamearea.canvas.height-(ourcorners[i].y-giventank.y);
+            tanks[z].y = gamearea.canvas.height-(ourcorners[i].y-tanks[z].y);
         }
         if (ourcorners[i].y < 0) {
-            giventank.y = giventank.y-ourcorners[i].y;
+            tanks[z].y = tanks[z].y-ourcorners[i].y;
         }
     }
     
@@ -199,13 +203,16 @@ function updatesingle(i){
             }
         }
         if (shoot){
-            tankshoot(tanks[i]);
+            tankshoot(i);
         }
         updatetanksbullets(i,tanks[i].maxbullets)
-        tanknewPos(tanks[i]);
+        tanknewPos(i);
     }
 }
 exports.updateone = function(i){
+    if (tanks[i]==undefined){
+        return false;
+    }
     // check if the property/key is defined in the object itself, not in parent
     if (tanks.hasOwnProperty(i)) {  
         actions = tanks[i].input;
@@ -233,10 +240,10 @@ exports.updateone = function(i){
             }
         }
         if (shoot){
-            tankshoot(tanks[i]);
+            tankshoot(i);
         }
         updatetanksbullets(i,tanks[i].maxbullets)
-        tanknewPos(tanks[i]);
+        tanknewPos(i);
     }
 
 }
@@ -275,9 +282,6 @@ function bullet(width, height, x, y, angle, speed, colour) {
     this.speed=speed;
     this.x += this.height/2 * Math.sin(this.angle);
     this.y -= this.height/2 * Math.cos(this.angle);
-    
-        
-    
 }
 
 function Point(x,y){ 
@@ -338,8 +342,9 @@ function findcorners(xpos, ypos, angle, width, height) {
     return [corner1,corner2,corner4,corner3];
 }
 function updatetanksbullets(colour,maxbullets) {
+    let tankothercornerso = tankothercorners(colour);
     for (i=0;i<bullets[colour].length;i++){
-        bulletnewPos(bullets[colour][i],tankothercorners(tanks[colour]));
+        bulletnewPos(colour,i,tankothercornerso);
     }
     bullets[colour].splice(0, bullets[colour].length-maxbullets);
 }

@@ -9,7 +9,7 @@ const ipadress = ip.address();
 console.log(ipadress);
 const ioport = 1569;
 const port = 80;
-const tickrate =100;
+const tickrate =1000;
 const io = require('socket.io')(ioport);
 const tankslogic = require('./static/scripts/tankslogic');
 const threadingpack = require('./multithreading')
@@ -56,6 +56,14 @@ io.on('connection', socket => {
     delete bullets[socket.id];
   })
 })
+
+app.get('/', function(req, res){
+  res.render(`${__dirname}/templates/multiplayertanks.html`, {ipadress: ipadress});
+})
+
+app.listen(port, function(){
+  console.log(`Running at http://localhost:${port}`)
+})
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -65,29 +73,17 @@ if (multithreading){
   async function a() {
     lasttime = Date.now();
     await threadupdatehandle()
-    console.log('done')
-    a()
+    await sleep(tickrate)
+    a();
     // console.log(Date.now()-lasttime);
   }
-  while(true){
-    a();
-    console.log('das')
-  }
-  function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+  a();
+
 }else{
   setInterval(tankslogic.updateGameArea, tickrate);
 }
 
 
-app.get('/', function(req, res){
-    res.render(`${__dirname}/templates/multiplayertanks.html`, {ipadress: ipadress});
-})
-
-app.listen(port, function(){
-    console.log(`Running at http://localhost:${port}`)
-})
 function handleNew(id){
   tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id);
   console.log(id,' joined');
@@ -118,8 +114,9 @@ function threadupdatehandle(){
       // console.log(cputotals)
       lasttime = Date.now();
       // console.log('going in')
+      // console.log(cputotals)
       let result = await Promise.all(cputotals.map(threadingpack))
-      console.log(result)
+      // console.log(result)
       // console.log(Date.now()-lasttime);
       for (i=0;i<result.length;i++){
         for (j=0;j<result[i].length;j++){
