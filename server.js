@@ -9,27 +9,16 @@ const ipadress = ip.address();
 console.log(ipadress);
 const ioport = 1569;
 const port = 80;
-const tickrate =1000;
+const tickrate =10;
 const io = require('socket.io')(ioport);
 const tankslogic = require('./static/scripts/tankslogic');
-const threadingpack = require('./multithreading')
 
 
 nunjucks.configure( '.', {
     autoescape: true,
     express: app
 });
-workerlist = [];
-userCPUCount = os.cpus().length;
-for (i=0;i<userCPUCount-2;i++){
-  workerlist.push(new Worker('./multithreading.js'))
-  workerlist[i].on('message',(states)=>{threadreturn(states)})
-  workerlist[i].on('error', function(s){console.log(s)});
-  workerlist[i].on('exit', (code) => {
-    if (code !== 0)
-      console.log(code)
-  });
-}
+
 inputs = {};
 tanks = {};
 bullets = {};
@@ -77,8 +66,19 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-multithreading=true;
+multithreading=false;
 if (multithreading){
+  workerlist = [];
+  userCPUCount = os.cpus().length;
+  for (i=0;i<userCPUCount-2;i++){
+    workerlist.push(new Worker('./multithreading.js'))
+    workerlist[i].on('message',(states)=>{threadreturn(states)})
+    workerlist[i].on('error', function(s){console.log(s)});
+    workerlist[i].on('exit', (code) => {
+      if (code !== 0)
+        console.log(code)
+    });
+  }
   async function a() {
     lasttime = Date.now();
     await threadsend();
@@ -128,14 +128,16 @@ function sendstate(cputotals){
 }
 function threadreturn(result){
   return new Promise((resolve) => {
+    console.log('start',result,'end')
     for (i=0;i<result.length;i++){
-      for (j=0;j<result[i].length;j++){
-        let colour = result[i][j][2];
-        tanks[colour] = result[i][j][0];
-        bullets[colour] = result[i][j][1];
-      }
+      // for (j=0;j<result[i].length;j++){
+        let colour = result[i][2];
+        tanks[colour] = result[i][0];
+        bullets[colour] = result[i][1];
+      // }
     }
-    resolve()
+    console.log('tankstart',tanks,'tankend')
+    resolve();
   })
 }
 

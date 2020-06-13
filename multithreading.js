@@ -2,9 +2,7 @@ const { Worker, isMainThread, parentPort,workerData } = require('worker_threads'
 workerid = require('worker_threads').threadId;
 console.log(workerid)
   if (isMainThread) {
-      
-        console.log('main thread messed up')
-      
+    console.log('main thread messed up')
   } else {
     const tankslogic = require('./static/scripts/tankslogic');
     parentPort.on('message',(states)=>{
@@ -19,8 +17,8 @@ console.log(workerid)
       returns = [];
       lengtho = colours.length;
       for (i=0;i<lengtho;i++){
-        // console.log(colours, 'all')
-        // console.log(colours[i], 'one')
+        console.log(colours, 'all')
+        console.log(colours[i], 'one')
         tankslogic.updateone(colours[i]);
         returns.push([tanks[colours[i]],bullets[colours[i]],colours[i]]);
         // console.log('bassel')

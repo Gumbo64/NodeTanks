@@ -6,7 +6,7 @@ gamearea.canvas.width = gamewidth;
 gamearea.canvas.height = gameheight;
 frictioncollision=false;
 function tankdamage(z){
-    tanks[z].health = tanks[z].health -0.5;
+    tanks[z].health -= -0.5;
 }
 function tankshoot(z) {
     if (Date.now() - tanks[z].lastshoot >= tanks[z].firerate){
@@ -66,7 +66,7 @@ function bulletnewPos(z,c,othercorners) {
                         // check if the property/key is defined in the object itself, not in parent
                         if (tanks.hasOwnProperty(p)) {           
                             if (tanks[p].colour == othercorners[j][4]){
-                                tankdamage(tanks[p]);
+                                tankdamage(p);
                             }
                         }
                     }
@@ -176,6 +176,9 @@ exports.updateGameArea = function() {
     }
 }
 function updatesingle(i){
+    if (!tanks[i]){
+        return false;
+    }
     // check if the property/key is defined in the object itself, not in parent
     if (tanks.hasOwnProperty(i)) {  
         actions = tanks[i].input;
