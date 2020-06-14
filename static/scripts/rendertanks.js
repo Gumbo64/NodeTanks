@@ -4,10 +4,9 @@ touchcontrols = false;
 touching = false;
 tanks = {};
 bullets = {};
+scale = 100;
 
 
-socket.emit('new-user');
-var clientname = "unnamed";
 var events;
 
 function getstates(){
@@ -38,28 +37,43 @@ function rendertanksbullets(colour) {
     }
 }
 function renderonebullet(bullet){
-    var ctx = gamearea.context;
     var bulletimg = document.getElementById('bullet');
-    bulletimg.width=bullet.width;
-    bulletimg.height=bullet.height;
-    ctx.setTransform(1, 0, 0, 1, bullet.x-clienttankx+centerx, bullet.y-clienttanky+centery); // sets scale && origin
-    ctx.rotate(bullet.angle);
-    ctx.drawImage(bulletimg, bullet.width / -2, bullet.height / -2, bullet.width, bullet.height);
+    scaledraw(bullet,bulletimg)
+ 
     
 }
-function rendertank(tank) {
+function scrollhandle(delta){
+    if(delta>0){
+        scale += 15;
+    }else{
+        scale -= 15;
+    }
+    if (scale<=0){
+        scale=10;
+    }else{
+        if (scale>500){
+            scale=500;
+        }
+    }
+}
+
+function scaledraw(item,img){
     var ctx = gamearea.context;
+    img.width=item.width;
+    img.height=item.height;
+    
+    ctx.setTransform(1, 0, 0, 1, (item.x-clienttankx)*(scale/100)+centerx, (item.y-clienttanky)*(scale/100)+centery); // sets scale && origin
+    ctx.rotate(item.angle);
+    ctx.drawImage(img, item.width*(scale/100) / -2, item.height*(scale/100) / -2, item.width*(scale/100), item.height*(scale/100));
+}
+function rendertank(tank) {
     if (tank.colour == clientname){
         var tankimg = document.getElementById('client');
         //window.scrollTo(tank.x-tank.width*7,tank.y-tank.height*7);
     }else{
         var tankimg = document.getElementById('tanks');
     }
-    tankimg.width=tank.width;
-    tankimg.height=tank.height;
-    ctx.setTransform(1, 0, 0, 1, tank.x-clienttankx+centerx, tank.y-clienttanky+centery); // sets scale && origin
-    ctx.rotate(tank.angle);
-    ctx.drawImage(tankimg, tank.width / -2, tank.height / -2, tank.width, tank.height);
+    scaledraw(tank,tankimg);
 }
 function wiper() {
     var ctx = gamearea.context;
@@ -71,14 +85,13 @@ function wiper() {
 }
 function background() {
     var ctx = gamearea.context;
-    height = 10000 + 1000;
-    width = 10000 + 1100;
+    height = (10000 + 1000);
+    width = (10000 + 1100);
     var tankimg = document.getElementById('background');
-
-    for (i=0;i<Math.ceil(width/tankimg.width);i++){
-        for (j=0;j<Math.ceil(height/tankimg.height);j++){
-            ctx.setTransform(1, 0, 0, 1, i*tankimg.width-clienttankx, j*tankimg.height-clienttanky); // sets scale && origin
-            ctx.drawImage(tankimg,0, 0, tankimg.width,tankimg.height);
+    for (i=0;i<Math.ceil(width/(tankimg.width*(scale/100)));i++){
+        for (j=0;j<Math.ceil(height/(tankimg.height*(scale/100)));j++){
+            ctx.setTransform(1, 0, 0, 1, (scale/100)*(i*tankimg.width-clienttankx), (scale/100)*(j*tankimg.height-clienttanky)); // sets scale && origin
+            ctx.drawImage(tankimg,0, 0, tankimg.width*(scale/100),tankimg.height*(scale/100));
         }
     }
 }
@@ -89,13 +102,16 @@ function rendergamearea(){
     background();
     for (var key in tanks) {
         // check if the property/key is defined in the object itself, not in parent
-        if (tanks.hasOwnProperty(key)) {      
-                 
-            rendertanksbullets(tanks[key].colour);
+        if (tanks.hasOwnProperty(key)) {    
+                
+            rendertanksbullets(key);
             rendertank(tanks[key]);
+            drawhealthname(key);  
+            
         }
         
     }
+    
     wiper();
     
 }
@@ -145,8 +161,13 @@ function playsound(id){
 function elbyid(elementid){
     return document.getElementById(elementid)
 }
-
+function truncate(str, n){
+    return (str.length > n) ? str.substr(0, n-1) + '&hellip;' : str;
+  };
 function startGame() {
+    username = prompt('Username?');
+    username = truncate(username,40)
+    socket.emit('new-user',username);
     backgroundcolour = '#ffffff';
     bullets = {};
     tanks = {};
@@ -175,6 +196,9 @@ function touchstop(e) {
     e.preventDefault();
     touching=false
 }
+function scrollfunction(e){
+    scrollhandle(e.deltaY);   
+}
 var gamearea = {
     canvas : document.getElementById("gamearea"),
     canvasstart : function() {
@@ -189,6 +213,7 @@ var gamearea = {
         this.stateinterval = setInterval(getstates, 10);
     },
     listeneron : function(){
+        window.addEventListener('wheel', scrollfunction);
         window.addEventListener('keydown', keydown)
         window.addEventListener('keyup', keyup)
         el = gamearea.canvas;
@@ -198,6 +223,7 @@ var gamearea = {
         el.addEventListener('touchend', touchstop);
     },
     listeneroff : function(){
+        window.removeEventListener('wheel', scrollfunction);
         window.removeEventListener('keydown', keydown)
         window.removeEventListener('keyup',keyup )
         el = gamearea.canvas;
@@ -219,18 +245,14 @@ var gamearea = {
 
 
 
-function drawhealth(){
-    canvas = gamearea.canvas;
-    context = gamearea.context;
-    context.fillStyle = "other";
-    context.font = "bold 6vh Arial";
-
-    for (var key in tanks) {
-        // check if the property/key is defined in the object itself, not in parent
-        if (tanks.hasOwnProperty(key)) {           
-            context.fillText(tanks[key].health+'hp',tanks[key].x,tanks[key].y-gh);
-        }
-    }
+function drawhealthname(z){
+    ctx = gamearea.context;
+    ctx.font = "30px Comic Sans MS";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.rotate(-tanks[z].angle);
+    // ctx.fillText(tanks[z].username+': '+tanks[z].health+'hp',tanks[z].x*(scale/100),tanks[z].y*(scale/100)-100);
+    ctx.fillText(tanks[z].username+': '+tanks[z].health+'hp',0,-50*(scale/100));
     
 }
 

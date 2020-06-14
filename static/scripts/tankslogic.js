@@ -5,9 +5,7 @@ gameheight= 10000;
 gamearea.canvas.width = gamewidth;
 gamearea.canvas.height = gameheight;
 frictioncollision=false;
-function tankdamage(z){
-    tanks[z].health -= -0.5;
-}
+
 function tankshoot(z) {
     if (Date.now() - tanks[z].lastshoot >= tanks[z].firerate){
         append = new bullet(tanks[z].bulletwidth,tanks[z].bulletheight,tanks[z].x,tanks[z].y,tanks[z].angle,tanks[z].bulletspeed,tanks[z].colour);
@@ -66,7 +64,8 @@ function bulletnewPos(z,c,othercorners) {
                         // check if the property/key is defined in the object itself, not in parent
                         if (tanks.hasOwnProperty(p)) {           
                             if (tanks[p].colour == othercorners[j][4]){
-                                tankdamage(p);
+                                console.log('hit')
+                                tanks[p].health += -0.5;
                             }
                         }
                     }
@@ -172,50 +171,40 @@ function tanknewPos(z) {
 
 exports.updateGameArea = function() {
     for (var i in tanks) {
-     updatesingle(i)
-    }
-}
-function updatesingle(i){
-    if (!tanks[i]){
-        return false;
-    }
-    // check if the property/key is defined in the object itself, not in parent
-    if (tanks.hasOwnProperty(i)) {  
-        actions = tanks[i].input;
-        left = actions[0];
-        right=actions[1];
-        up=actions[2];
-        down=actions[3];
-        shoot=actions[4];
-        if (up){
-            tanks[i].speed = 1;
-        }else{
-            if (down){
-                tanks[i].speed = -1;
+        if (tanks.hasOwnProperty(i)) {  
+            actions = tanks[i].input;
+            left = actions[0];
+            right=actions[1];
+            up=actions[2];
+            down=actions[3];
+            shoot=actions[4];
+            if (up){
+                tanks[i].speed = 1;
             }else{
-                tanks[i].speed=0;
+                if (down){
+                    tanks[i].speed = -1;
+                }else{
+                    tanks[i].speed=0;
+                }
             }
-        }
-        if (left){
-            tanks[i].moveAngle = -1;
-        }else{
-            if (right){
-                tanks[i].moveAngle = 1;
+            if (left){
+                tanks[i].moveAngle = -1;
             }else{
-                tanks[i].moveAngle=0;
+                if (right){
+                    tanks[i].moveAngle = 1;
+                }else{
+                    tanks[i].moveAngle=0;
+                }
             }
+            if (shoot){
+                tankshoot(i);
+            }
+            updatetanksbullets(i,tanks[i].maxbullets)
+            tanknewPos(i);
         }
-        if (shoot){
-            tankshoot(i);
-        }
-        updatetanksbullets(i,tanks[i].maxbullets)
-        tanknewPos(i);
     }
 }
 exports.updateone = function(i){
-    if (tanks[i]==undefined){
-        return false;
-    }
     // check if the property/key is defined in the object itself, not in parent
     if (tanks.hasOwnProperty(i)) {  
         actions = tanks[i].input;
@@ -250,7 +239,8 @@ exports.updateone = function(i){
     }
 
 }
-exports.maketank = function(x, y, colour) {
+exports.maketank = function(x, y, colour,username) {
+    this.username = username;
     this.lastshoot = Date.now();
     this.input = [false,false,false,false,false];
     // [false,false,false,false,false]

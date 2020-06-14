@@ -22,20 +22,24 @@ nunjucks.configure( '.', {
 inputs = {};
 tanks = {};
 bullets = {};
-gamearea = {};
-gamearea['canvas']={};
-gamewidth = 10000;
-gameheight= 10000;
-gamearea.canvas.width = gamewidth;
-gamearea.canvas.height = gameheight;
+// gamearea = {};
+// gamearea['canvas']={};
+// gamewidth = 1000;
+// gameheight= 1000;
+// gamearea.canvas.width = gamewidth;
+// gamearea.canvas.height = gameheight;
 workers = {};
 app.set('view engine', 'nunjucks')
 app.use('/static', express.static('static'))
 bullets = {}
+function truncate(str, n){
+  return (str.length > n) ? str.substr(0, n-1) + '&hellip;' : str;
+};
 io.on('connection', socket => {
-  socket.on('new-user', () => {
+  socket.on('new-user', (username) => {
+    username = truncate(username,40);
     socket.emit('identifier',socket.id);
-    handleNew(socket.id);
+    handleNew(socket.id,username);
   })
   socket.on('staterequest', (inputis) => {
     socket.emit('states',tanks,bullets);
@@ -43,13 +47,13 @@ io.on('connection', socket => {
       tanks[socket.id].input=inputis; 
     } catch (error) {
       socket.emit('identifier',socket.id);
-      handleNew(socket.id);
+      handleNew(socket.id,'unnamed');
     }
     
   })
   socket.on('disconnect', () => {
     //delete workers[socket.id];
-    console.log(socket.id,' disconnected')
+    console.log(tanks[socket.id].username,' disconnected')
     delete tanks[socket.id];
     delete bullets[socket.id];
   })
@@ -141,9 +145,9 @@ function threadreturn(result){
   })
 }
 
-function handleNew(id){
-  tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id);
-  console.log(id,' joined');
+function handleNew(id,username){
+  tanks[id] = new tankslogic.maketank(Math.round(Math.random()*gamewidth),Math.round(Math.random()*gameheight),id,username);
+  console.log(username,' joined');
 }
 
 
