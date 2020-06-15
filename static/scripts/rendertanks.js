@@ -253,6 +253,7 @@ function drawhealthname(z){
     ctx.rotate(-tanks[z].angle);
     // ctx.fillText(tanks[z].username+': '+tanks[z].health+'hp',tanks[z].x*(scale/100),tanks[z].y*(scale/100)-100);
     if(tanks[clientname].health<=0){
+        ctx.fillStyle = "black";
         ctx.fillText('You died',0,-50*(scale/100));
     }else{
         ctx.fillText(tanks[z].username+': '+tanks[z].health+'hp',0,-50*(scale/100));

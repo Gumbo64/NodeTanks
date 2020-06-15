@@ -3,10 +3,12 @@ const express = require('express')
 const app = express()
 const path = require('path');
 const nunjucks = require('nunjucks');
-const ip = require('ip');
-const { Worker, isMainThread, parentPort } = require('worker_threads');
-const ipadress = ip.address();
-console.log(ipadress);
+const publicIp = require('public-ip');
+// const { Worker, isMainThread, parentPort } = require('worker_threads');
+(async () => {
+  ipadress = await publicIp.v4();
+  //=> '46.5.21.123'
+})();
 const ioport = 1569;
 const port = 80;
 const tickrate =10;
@@ -53,6 +55,9 @@ io.on('connection', socket => {
   })
   socket.on('disconnect', () => {
     //delete workers[socket.id];
+    if (!tanks[socket.id].username){
+      tanks[socket.id].username='unnamed';
+    }
     console.log(tanks[socket.id].username,' disconnected')
     delete tanks[socket.id];
     delete bullets[socket.id];
@@ -60,7 +65,7 @@ io.on('connection', socket => {
 })
 
 app.get('/', function(req, res){
-  res.render(`${__dirname}/templates/multiplayertanks.html`, {ipadress: ipadress});
+  res.render(`${__dirname}/templates/multiplayertanks.html`);
 })
 
 app.listen(port, function(){
